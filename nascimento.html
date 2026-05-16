@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Máquina do Tempo</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+:root{
+  --paper:#f4ede0;
+  --ink:#1c1208;
+  --ink2:#3d2e14;
+  --muted:#8a7355;
+  --rule:#c5a96b;
+  --accent:#8b1a1a;
+  --card:#ede4d0;
+}
+
+body{
+  font-family:'Libre Baskerville',Georgia,serif;
+  background:var(--paper);
+  min-height:100vh;
+  color:var(--ink);
+  padding:40px 16px 60px;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+}
+
+.masthead{
+  text-align:center;
+  border-top:4px double var(--ink);
+  border-bottom:4px double var(--ink);
+  padding:14px 0 10px;
+  margin-bottom:6px;
+}
+
+.masthead-eyebrow{
+  font-size:0.65rem;
+  letter-spacing:0.25em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:6px;
+}
+
+.masthead-title{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(2.4rem,8vw,4.2rem);
+  font-weight:900;
+  line-height:1;
+  letter-spacing:-1px;
+  color:var(--ink);
+}
+
+.masthead-subtitle{
+  font-size:0.7rem;
+  letter-spacing:0.18em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-top:6px;
+}
+
+.rule{
+  border:none;
+  border-top:1px solid var(--rule);
+  margin:10px 0;
+}
+
+.wrap{
+  max-width:680px;
+  margin:0 auto;
+}
+
+/* Input section */
+.input-section{
+  background:var(--card);
+  border:1px solid var(--rule);
+  border-radius:2px;
+  padding:28px;
+  margin:20px 0;
+  position:relative;
+}
+
+.input-section::before{
+  content:'✦ INFORME SUA DATA DE NASCIMENTO ✦';
+  position:absolute;
+  top:-10px;
+  left:50%;
+  transform:translateX(-50%);
+  background:var(--card);
+  padding:0 14px;
+  font-size:0.6rem;
+  letter-spacing:0.2em;
+  text-transform:uppercase;
+  color:var(--muted);
+  white-space:nowrap;
+}
+
+.date-row{
+  display:flex;
+  gap:12px;
+  margin-bottom:20px;
+  flex-wrap:wrap;
+}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  flex:1;
+  min-width:80px;
+}
+
+.field label{
+  font-size:0.62rem;
+  letter-spacing:0.2em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+.field select, .field input{
+  font-family:'Libre Baskerville',serif;
+  font-size:1rem;
+  border:none;
+  border-bottom:2px solid var(--rule);
+  background:transparent;
+  color:var(--ink);
+  padding:6px 0;
+  outline:none;
+  width:100%;
+  cursor:pointer;
+  -webkit-appearance:none;
+  appearance:none;
+}
+
+.field select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a7355'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 4px center;
+  padding-right:20px;
+}
+
+.field select:focus, .field input:focus{
+  border-bottom-color:var(--accent);
+}
+
+.field input[type=number]::-webkit-inner-spin-button,
+.field input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;}
+.field input[type=number]{-moz-appearance:textfield;}
+
+.btn{
+  width:100%;
+  padding:13px;
+  background:var(--ink);
+  color:var(--paper);
+  border:none;
+  font-family:'Playfair Display',serif;
+  font-size:1rem;
+  font-weight:700;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  cursor:pointer;
+  border-radius:1px;
+  transition:background 0.2s,transform 0.1s;
+}
+
+.btn:hover{background:var(--accent);}
+.btn:active{transform:scale(0.99);}
+
+.error-msg{
+  color:var(--accent);
+  font-size:0.82rem;
+  text-align:center;
+  margin-top:10px;
+  font-style:italic;
+  display:none;
+}
+
+/* Result */
+.result{
+  display:none;
+  animation:reveal 0.5s ease;
+}
+
+.result.visible{display:block;}
+
+@keyframes reveal{
+  from{opacity:0;transform:translateY(10px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+.edition-bar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:0.65rem;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+  border-top:3px solid var(--ink);
+  border-bottom:1px solid var(--rule);
+  padding:6px 0;
+  margin-bottom:14px;
+}
+
+.headline-block{
+  margin-bottom:20px;
+}
+
+.kicker{
+  font-size:0.65rem;
+  letter-spacing:0.22em;
+  text-transform:uppercase;
+  color:var(--accent);
+  font-family:'Libre Baskerville',serif;
+  margin-bottom:4px;
+}
+
+.headline{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(1.7rem,5vw,2.6rem);
+  font-weight:900;
+  line-height:1.1;
+  color:var(--ink);
+  margin-bottom:6px;
+}
+
+.deck{
+  font-size:0.88rem;
+  color:var(--ink2);
+  font-style:italic;
+  line-height:1.5;
+}
+
+.columns{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
+  border-top:1px solid var(--rule);
+  padding-top:16px;
+  margin-bottom:16px;
+}
+
+@media(max-width:480px){.columns{grid-template-columns:1fr;}}
+
+.col-label{
+  font-size:0.6rem;
+  letter-spacing:0.2em;
+  text-transform:uppercase;
+  color:var(--muted);
+  border-bottom:1px solid var(--rule);
+  padding-bottom:4px;
+  margin-bottom:8px;
+}
+
+.col-value{
+  font-family:'Playfair Display',serif;
+  font-size:1.5rem;
+  font-weight:700;
+  color:var(--ink);
+  margin-bottom:4px;
+}
+
+.col-sub{
+  font-size:0.8rem;
+  color:var(--muted);
+  font-style:italic;
+}
+
+.news-box{
+  border:1px solid var(--rule);
+  padding:18px;
+  background:var(--card);
+  border-radius:1px;
+  margin-bottom:16px;
+  position:relative;
+}
+
+.news-box::after{
+  content:'';
+  position:absolute;
+  top:4px;right:4px;bottom:4px;left:4px;
+  border:1px solid var(--rule);
+  pointer-events:none;
+  opacity:0.4;
+}
+
+.news-category{
+  font-size:0.6rem;
+  letter-spacing:0.25em;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin-bottom:6px;
+}
+
+.news-title{
+  font-family:'Playfair Display',serif;
+  font-size:1.05rem;
+  font-weight:700;
+  line-height:1.3;
+  margin-bottom:6px;
+}
+
+.news-body{
+  font-size:0.82rem;
+  line-height:1.7;
+  color:var(--ink2);
+  text-align:justify;
+}
+
+.news-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  margin-bottom:16px;
+}
+
+@media(max-width:480px){.news-grid{grid-template-columns:1fr;}}
+
+.news-small{
+  border-top:2px solid var(--ink);
+  padding-top:10px;
+}
+
+.news-small .news-title{font-size:0.88rem;}
+.news-small .news-body{font-size:0.78rem;}
+
+.byline{
+  text-align:center;
+  font-size:0.65rem;
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  color:var(--muted);
+  border-top:4px double var(--ink);
+  padding-top:10px;
+  margin-top:20px;
+}
+
+.zodiac-strip{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:var(--ink);
+  color:var(--paper);
+  padding:10px 16px;
+  margin-bottom:16px;
+  font-size:0.82rem;
+}
+
+.zodiac-sign{font-size:1.5rem;line-height:1;}
+.zodiac-name{font-family:'Playfair Display',serif;font-weight:700;font-size:1rem;}
+.zodiac-dates{font-size:0.7rem;opacity:0.65;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <p class="masthead-eyebrow">Edição Especial · Arquivo Histórico</p>
+    <h1 class="masthead-title">A Máquina do Tempo</h1>
+    <p class="masthead-subtitle">Diário do Dia em que Você Nasceu · Desde 1900</p>
+  </div>
+  <hr class="rule"/>
+
+  <div class="input-section">
+    <div class="date-row">
+      <div class="field">
+        <label for="dia">Dia</label>
+        <input type="number" id="dia" placeholder="15" min="1" max="31"/>
+      </div>
+      <div class="field">
+        <label for="mes">Mês</label>
+        <select id="mes">
+          <option value="">— mês —</option>
+          <option value="0">Janeiro</option>
+          <option value="1">Fevereiro</option>
+          <option value="2">Março</option>
+          <option value="3">Abril</option>
+          <option value="4">Maio</option>
+          <option value="5">Junho</option>
+          <option value="6">Julho</option>
+          <option value="7">Agosto</option>
+          <option value="8">Setembro</option>
+          <option value="9">Outubro</option>
+          <option value="10">Novembro</option>
+          <option value="11">Dezembro</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="ano">Ano</label>
+        <input type="number" id="ano" placeholder="1990" min="1900" max="2025"/>
+      </div>
+    </div>
+    <button class="btn" onclick="consultar()">✦ Viajar no Tempo ✦</button>
+    <p class="error-msg" id="err">Por favor, insira uma data válida entre 1900 e 2025.</p>
+  </div>
+
+  <div class="result" id="result">
+    <div class="edition-bar">
+      <span id="ed-data"></span>
+      <span>Edição Especial de Aniversário</span>
+      <span id="ed-ano"></span>
+    </div>
+
+    <div class="headline-block">
+      <p class="kicker">Manchete do Dia</p>
+      <h2 class="headline" id="main-headline"></h2>
+      <p class="deck" id="main-deck"></p>
+    </div>
+
+    <div class="columns">
+      <div>
+        <p class="col-label">Dia da Semana</p>
+        <p class="col-value" id="weekday"></p>
+        <p class="col-sub" id="full-date"></p>
+      </div>
+      <div>
+        <p class="col-label">Signo do Zodíaco</p>
+        <p class="col-value" id="zodiac-name-col"></p>
+        <p class="col-sub" id="zodiac-trait"></p>
+      </div>
+    </div>
+
+    <div class="zodiac-strip">
+      <span class="zodiac-sign" id="zodiac-sym"></span>
+      <div>
+        <div class="zodiac-name" id="zodiac-full"></div>
+        <div class="zodiac-dates" id="zodiac-dates"></div>
+      </div>
+    </div>
+
+    <div class="news-box">
+      <p class="news-category" id="n1-cat"></p>
+      <p class="news-title" id="n1-title"></p>
+      <p class="news-body" id="n1-body"></p>
+    </div>
+
+    <div class="news-grid">
+      <div class="news-small">
+        <p class="news-category" id="n2-cat"></p>
+        <p class="news-title" id="n2-title"></p>
+        <p class="news-body" id="n2-body"></p>
+      </div>
+      <div class="news-small">
+        <p class="news-category" id="n3-cat"></p>
+        <p class="news-title" id="n3-title"></p>
+        <p class="news-body" id="n3-body"></p>
+      </div>
+    </div>
+
+    <p class="byline" id="byline-text"></p>
+  </div>
+
+</div>
+
+<script>
+const DIAS = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+const MESES_EXT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+const ZODIAC = [
+  {n:'Capricórnio', s:'♑', d:'22 dez – 19 jan', t:'Determinado e ambicioso', from:[12,22], to:[1,19]},
+  {n:'Aquário',     s:'♒', d:'20 jan – 18 fev', t:'Inovador e independente', from:[1,20],  to:[2,18]},
+  {n:'Peixes',      s:'♓', d:'19 fev – 20 mar', t:'Intuitivo e compassivo',  from:[2,19],  to:[3,20]},
+  {n:'Áries',       s:'♈', d:'21 mar – 19 abr', t:'Corajoso e pioneiro',     from:[3,21],  to:[4,19]},
+  {n:'Touro',       s:'♉', d:'20 abr – 20 mai', t:'Paciente e confiável',    from:[4,20],  to:[5,20]},
+  {n:'Gêmeos',      s:'♊', d:'21 mai – 20 jun', t:'Curioso e versátil',      from:[5,21],  to:[6,20]},
+  {n:'Câncer',      s:'♋', d:'21 jun – 22 jul', t:'Protetor e sensível',     from:[6,21],  to:[7,22]},
+  {n:'Leão',        s:'♌', d:'23 jul – 22 ago', t:'Criativo e generoso',     from:[7,23],  to:[8,22]},
+  {n:'Virgem',      s:'♍', d:'23 ago – 22 set', t:'Analítico e dedicado',    from:[8,23],  to:[9,22]},
+  {n:'Libra',       s:'♎', d:'23 set – 22 out', t:'Justo e harmonioso',      from:[9,23],  to:[10,22]},
+  {n:'Escorpião',   s:'♏', d:'23 out – 21 nov', t:'Intenso e perspicaz',     from:[10,23], to:[11,21]},
+  {n:'Sagitário',   s:'♐', d:'22 nov – 21 dez', t:'Otimista e aventureiro',  from:[11,22], to:[12,21]},
+];
+
+function getZodiac(m, d) {
+  const m1 = m + 1;
+  for (const z of ZODIAC) {
+    const [fm, fd] = z.from;
+    const [tm, td] = z.to;
+    if (fm <= tm) {
+      if ((m1 === fm && d >= fd) || (m1 === tm && d <= td) || (m1 > fm && m1 < tm)) return z;
+    } else {
+      if ((m1 === fm && d >= fd) || (m1 === tm && d <= td) || m1 > fm || m1 < tm) return z;
+    }
+  }
+  return ZODIAC[0];
+}
+
+// Banco de notícias por décadas
+const NOTICIAS = {
+  1900: [
+    {cat:'Política Mundial', h:'A Transição do Século', d:'O mundo desperta para uma nova era de descobertas científicas e expansão industrial. As nações europeias consolidam seus impérios coloniais enquanto os EUA emergem como potência global.',
+     n2cat:'Ciência', n2h:'Primeiros voos planejados', n2b:'Engenheiros e inventores ao redor do mundo competem para conquistar os céus em máquinas mais pesadas que o ar.',
+     n3cat:'Cultura', n3h:'A Belle Époque em seu auge', n3b:'Paris reina como capital mundial da arte, moda e pensamento. Os cabarés e salões definem o gosto de uma geração.'},
+  ],
+  1910: [
+    {cat:'Tragédia no Mar', h:'O Titanic e a Fragilidade Humana', d:'A tragédia do naufrágio do RMS Titanic em 1912 chocou o mundo e demonstrou que nem mesmo as maiores obras da engenharia são invencíveis.',
+     n2cat:'Guerra', n2h:'Balkans em chamas', n2b:'As guerras balcânicas redesenham o mapa da Europa e lançam sementes de conflito que ameaçam a estabilidade do continente.',
+     n3cat:'Arte', n3h:'O futurismo e o expressionismo', n3b:'Movimentos artísticos radicais rejeitam o passado e celebram a velocidade, a máquina e a emoção crua.'},
+  ],
+  1920: [
+    {cat:'Guerra Mundial', h:'As Trincheiras Mudam o Mundo Para Sempre', d:'A Primeira Guerra Mundial deixou cicatrizes profundas na Europa. Milhões perderam a vida nos campos de batalha enquanto impérios centenários ruíam.',
+     n2cat:'Revolução', n2h:'A Rússia torna-se soviética', n2b:'A Revolução Bolchevique transforma o maior país do mundo e anuncia o nascimento de uma nova ordem política global.',
+     n3cat:'Tecnologia', n3h:'O rádio entra nos lares', n3b:'As transmissões de rádio comerciais chegam às casas, conectando o mundo de forma nunca antes imaginada.'},
+  ],
+  1930: [
+    {cat:'Economia', h:'A Grande Depressão Assola o Planeta', d:'O colapso da Bolsa de Nova York em 1929 desencadeou uma crise econômica sem precedentes. Milhões de desempregados enfrentam a miséria enquanto governos buscam soluções.',
+     n2cat:'Política', n2h:'Fascismo avança na Europa', n2b:'Movimentos totalitários ganham força em vários países europeus, ameaçando as democracias e os direitos civis conquistados a duras penas.',
+     n3cat:'Cinema', n3h:'Hollywood e a era dos filmes falados', n3b:'O cinema sonoro transforma a indústria do entretenimento e cria um novo tipo de celebridade: a estrela de Hollywood.'},
+  ],
+  1940: [
+    {cat:'Segunda Guerra', h:'O Mundo em Chamas: Conflito Global Sem Precedentes', d:'A Segunda Guerra Mundial mobilizou nações em todos os continentes. Batalhas decisivas são travadas da Europa ao Pacífico enquanto o destino da humanidade pende na balança.',
+     n2cat:'Tecnologia', n2h:'A era do radar e dos mísseis', n2b:'A guerra acelera o desenvolvimento tecnológico em ritmo frenético. Radares, foguetes e novos materiais transformam o campo de batalha.',
+     n3cat:'Sociedade', n3h:'Mulheres assumem as fábricas', n3b:'Com homens mobilizados para o front, as mulheres provam sua capacidade em postos antes exclusivamente masculinos, mudando para sempre o papel da mulher na sociedade.'},
+  ],
+  1950: [
+    {cat:'Guerra Fria', h:'EUA e URSS Dividem o Mundo em Dois Blocos', d:'A tensão entre as superpotências molda a geopolítica global. A corrida armamentista e a ameaça nuclear mantêm o mundo em suspenso enquanto a Guerra da Coreia divide uma península.',
+     n2cat:'Tecnologia', n2h:'A televisão chega à sala de estar', n2b:'O aparelho de TV torna-se o centro do entretenimento familiar. As transmissões ao vivo mudam a forma como as pessoas consomem notícias e cultura.',
+     n3cat:'Cultura', n3h:'O rock\'n\'roll nasce nos EUA', n3b:'Um novo ritmo revolucionário sacude as rádios e gera controvérsia entre os mais conservadores. Elvis Presley e Chuck Berry são seus profetas.'},
+  ],
+  1960: [
+    {cat:'Corrida Espacial', h:'A Humanidade Mira as Estrelas pela Primeira Vez', d:'EUA e URSS competem para conquistar o espaço. Yuri Gagarin orbita a Terra em 1961 e Neil Armstrong pisa na Lua em 1969, marcando para sempre a história humana.',
+     n2cat:'Direitos Civis', n2h:'Martin Luther King lidera marcha histórica', n2b:'O movimento pelos direitos civis nos EUA ganha força global. O sonho de igualdade racial mobiliza milhões e desafia a segregação institucional.',
+     n3cat:'Contracultura', n3h:'Os Beatles e a Beatlemania', n3b:'Quatro rapazes de Liverpool mudam a música para sempre. A Beatlemania varre o mundo e uma geração inteira encontra sua trilha sonora.'},
+  ],
+  1970: [
+    {cat:'Energia', h:'A Crise do Petróleo Abala a Economia Global', d:'O embargo árabe de 1973 quadruplicou o preço do petróleo e expôs a dependência do mundo ocidental em relação aos combustíveis fósseis. Filas nos postos de gasolina tornaram-se símbolo da época.',
+     n2cat:'Política', n2h:'Nixon e o escândalo Watergate', n2b:'A crise política mais grave da história americana leva à renúncia de um presidente pela primeira vez. A confiança nas instituições nunca mais seria a mesma.',
+     n3cat:'Música', n3h:'O disco e o punk sacudem as paradas', n3b:'Dois movimentos radicalmente opostos dominam a cena musical: a euforia das discotecas e a raiva crua do punk rock britânico.'},
+  ],
+  1980: [
+    {cat:'Tecnologia', h:'O Computador Pessoal Chega às Casas', d:'A Apple e a IBM popularizam os computadores pessoais, iniciando uma revolução tecnológica que mudaria para sempre o trabalho, a comunicação e o cotidiano. Uma nova era começa nas mesas da sala.',
+     n2cat:'Geopolítica', n2h:'Reagan e Thatcher redefinem o capitalismo', n2b:'As políticas neoliberais varreram o ocidente. Privatizações e desregulamentação mudam o papel do Estado e polarizam sociedades.',
+     n3cat:'Pop', n3h:'Michael Jackson, o Rei do Pop', n3b:'Thriller torna-se o álbum mais vendido da história. Michael Jackson redefine o videoclipe, o entretenimento e a música pop de forma que o mundo nunca havia visto.'},
+  ],
+  1990: [
+    {cat:'Era Digital', h:'A Internet Conecta o Planeta pela Primeira Vez', d:'A World Wide Web nasce em 1991 e muda para sempre a comunicação humana. E-mails, sites e fóruns criam um novo espaço público global, invisível mas onipresente.',
+     n2cat:'Geopolítica', n2h:'A queda do Muro e o fim da URSS', n2b:'A Guerra Fria chega ao fim com a dissolução da União Soviética em 1991. O mapa político da Europa é redesenhado em tempo recorde.',
+     n3cat:'Cultura', n3h:'O grunge e a geração X', n3b:'Nirvana, Pearl Jam e Soundgarden definem o som de uma geração desiludida. Kurt Cobain torna-se símbolo de uma angústia coletiva.'},
+  ],
+  2000: [
+    {cat:'Século XXI', h:'O Mundo Sobrevive ao Bug do Milênio', d:'A virada do milênio foi marcada por temores de um colapso dos sistemas computacionais. Com a ameaça superada, o mundo celebrou e olhou para o futuro cheio de esperanças — mas os atentados de 11 de setembro de 2001 mudaram tudo.',
+     n2cat:'Tecnologia', n2h:'O boom das pontocom', n2b:'Empresas de internet captam bilhões sem apresentar lucro. A bolha especulativa logo estouraria, levando consigo fortunas e ilusões.',
+     n3cat:'Entretenimento', n3h:'Harry Potter conquista o planeta', n3b:'A saga de J.K. Rowling transforma a literatura infanto-juvenil e cria uma das franquias mais lucrativas da história do entretenimento.'},
+  ],
+  2010: [
+    {cat:'Redes Sociais', h:'Facebook, Twitter e a Revolução da Conectividade', d:'As redes sociais transformam a forma como o mundo se comunica e se organiza. Das Primaveras Árabes às eleições presidenciais, o digital invade o real com consequências profundas e imprevisíveis.',
+     n2cat:'Tecnologia', n2h:'O smartphone como extensão do corpo', n2b:'Com o iPhone e o Android dominando o mercado, o celular torna-se o objeto mais pessoal da história humana. Apps redefinem mobilidade, trabalho e relacionamentos.',
+     n3cat:'Streaming', n3h:'Netflix muda como o mundo consome TV', n3b:'O modelo de assinatura por streaming revoluciona a indústria do entretenimento e ameaça o modelo tradicional da televisão aberta.'},
+  ],
+  2020: [
+    {cat:'Pandemia', h:'A Covid-19 Para o Mundo', d:'O coronavírus se espalha pelo globo e força o maior lockdown da história moderna. Bilhões de pessoas ficam em casa enquanto cientistas correm para desenvolver uma vacina em tempo recorde.',
+     n2cat:'Tecnologia', n2h:'Inteligência Artificial em ascensão', n2b:'Modelos de linguagem e visão computacional saem dos laboratórios e chegam ao dia a dia. Uma nova revolução tecnológica remodela profissões e questiona o futuro do trabalho.',
+     n3cat:'Geopolítica', n3h:'Tensões globais e multipolaridade', n3b:'A ordem mundial estabelecida após a Guerra Fria é desafiada por novos conflitos, rivalidades e pela ascensão de potências emergentes.'},
+  ],
+};
+
+function getNewsPack(ano) {
+  const decada = Math.floor(ano / 10) * 10;
+  const chave = Math.min(decada, 2020);
+  const opcoes = NOTICIAS[chave] || NOTICIAS[2020];
+  return opcoes[0];
+}
+
+function consultar() {
+  const dia = parseInt(document.getElementById('dia').value);
+  const mes = document.getElementById('mes').value;
+  const ano = parseInt(document.getElementById('ano').value);
+  const err = document.getElementById('err');
+
+  if (!dia || mes === '' || !ano || isNaN(dia) || isNaN(ano)) {
+    err.style.display = 'block'; return;
+  }
+
+  const data = new Date(ano, parseInt(mes), dia);
+  if (
+    data.getFullYear() !== ano ||
+    data.getMonth() !== parseInt(mes) ||
+    data.getDate() !== dia ||
+    ano < 1900 || ano > 2025
+  ) {
+    err.style.display = 'block'; return;
+  }
+  err.style.display = 'none';
+
+  const diaSemana = DIAS[data.getDay()];
+  const mesNome = MESES_EXT[parseInt(mes)];
+  const zod = getZodiac(parseInt(mes), dia);
+  const news = getNewsPack(ano);
+
+  document.getElementById('ed-data').textContent = `${dia} de ${mesNome} de ${ano}`;
+  document.getElementById('ed-ano').textContent = `Ano ${ano}`;
+
+  document.getElementById('main-headline').textContent = news.h;
+  document.getElementById('main-deck').textContent = news.d;
+
+  document.getElementById('weekday').textContent = diaSemana;
+  document.getElementById('full-date').textContent = `${dia} de ${mesNome} de ${ano}`;
+
+  document.getElementById('zodiac-name-col').textContent = zod.n;
+  document.getElementById('zodiac-trait').textContent = zod.t;
+
+  document.getElementById('zodiac-sym').textContent = zod.s;
+  document.getElementById('zodiac-full').textContent = zod.n;
+  document.getElementById('zodiac-dates').textContent = zod.d;
+
+  document.getElementById('n1-cat').textContent = news.cat;
+  document.getElementById('n1-title').textContent = news.h;
+  document.getElementById('n1-body').textContent = news.d;
+
+  document.getElementById('n2-cat').textContent = news.n2cat;
+  document.getElementById('n2-title').textContent = news.n2h;
+  document.getElementById('n2-body').textContent = news.n2b;
+
+  document.getElementById('n3-cat').textContent = news.n3cat;
+  document.getElementById('n3-title').textContent = news.n3h;
+  document.getElementById('n3-body').textContent = news.n3b;
+
+  document.getElementById('byline-text').textContent =
+    `✦ Edição histórica referente ao dia ${dia} de ${mesNome} de ${ano} · Arquivo A Máquina do Tempo ✦`;
+
+  const res = document.getElementById('result');
+  res.classList.remove('visible');
+  void res.offsetWidth;
+  res.classList.add('visible');
+  res.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Enter') consultar(); });
+</script>
+</body>
+</html>
