@@ -16,7 +16,116 @@
       background-color: #e8f5e9;
     }
     .container {
-      background: #04d8e7;
+      background:       ...existing code...
+          .logo {
+            width: 120px;
+            margin-bottom: 15px;
+          }
+          h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+          }
+      /* ...existing code... */
+      +    /* Indicador e legenda de classificação */
+      +    .resultado-badge {
+      +      display: inline-block;
+      +      margin-left: 8px;
+      +      padding: 4px 8px;
+      +      border-radius: 12px;
+      +      color: #fff;
+      +      font-weight: 700;
+      +      font-size: 13px;
+      +      vertical-align: middle;
+      +    }
+      +    .classification-legend {
+      +      margin-top: 18px;
+      +      text-align: left;
+      +      width: 100%;
+      +      border-radius: 8px;
+      +      padding: 8px;
+      +      background: rgba(255,255,255,0.06);
+      +      color: #fff;
+      +      box-sizing: border-box;
+      +    }
+      +    .classification-legend table {
+      +      width: 100%;
+      +      border-collapse: collapse;
+      +    }
+      +    .classification-legend th, .classification-legend td {
+      +      padding: 6px;
+      +      font-size: 13px;
+      +      border-bottom: 1px solid rgba(255,255,255,0.04);
+      +    }
+      +    .color-sample {
+      +      width: 100%;
+      +      height: 10px;
+      +      border-radius: 6px;
+      +      margin-top: 8px;
+      +      background: linear-gradient(90deg, #2196F3 0%, #4CAF50 40%, #FFB300 70%, #E53935 100%);
+      +    }
+      ...existing code...      ...existing code...
+          limparHistoricoBtn.addEventListener('click', () => {
+            if (!confirm('Deseja realmente limpar todo o histórico?')) return;
+            localStorage.removeItem(STORAGE_KEY);
+            renderHistorico();
+          });
+      +
+      +    // adiciona legenda/associação visual da classificação (HTML já presente no container)
+      ...existing code...      ...existing code...
+          function showResultado(text, isError) {
+      -      resultadoEl.style.display = 'block';
+      -      resultadoEl.textContent = text;
+      -      resultadoEl.style.background = isError ? 'rgba(255,0,0,0.12)' : 'rgba(255,255,255,0.15)';
+      +      resultadoEl.style.display = 'block';
+      +      // Se for erro, mantém fundo de erro
+      +      if (isError) {
+      +        resultadoEl.style.background = 'rgba(255,0,0,0.12)';
+      +        resultadoEl.textContent = text;
+      +        resultadoEl.style.borderLeft = '6px solid rgba(255,0,0,0.6)';
+      +        return;
+      +      }
+      +
+      +      // Se vier imc e categoria embutidos no text (texto já montado), tentar extrair o valor do IMC
+      +      resultadoEl.style.background = 'rgba(255,255,255,0.12)';
+      +      resultadoEl.innerHTML = text; // inicialmente contém "IMC: xx — Categoria"
+      +      resultadoEl.style.borderLeft = '6px solid rgba(255,255,255,0.06)';
+          }
+      +
+      +    // Nova função utilitária para interpolar cor entre azul (#2196F3) e vermelho (#E53935)
+      +    function getColorForIMC(imc) {
+      +      // normaliza imc em escala 0..1 (0 = 12, 1 = 45) ajustável
+      +      const min = 12;
+      +      const max = 45;
+      +      const t = Math.min(1, Math.max(0, (imc - min) / (max - min)));
+      +      // azul -> verde -> amarelo -> vermelho interpolation via stops
+      +      function lerp(a, b, t){ return Math.round(a + (b - a) * t); }
+      +      const stops = [
+      +        {t:0, c:[33,150,243]},   // #2196F3 azul
+      +        {t:0.4, c:[76,175,80]},  // #4CAF50 verde
+      +        {t:0.7, c:[255,179,0]},  // #FFB300 amarelo
+      +        {t:1, c:[229,57,53]}     // #E53935 vermelho
+      +      ];
+      +      // find interval
+      +      for (let i=0;i<stops.length-1;i++){
+      +        const a = stops[i], b = stops[i+1];
+      +        if (t >= a.t && t <= b.t) {
+      +          const localT = (t - a.t) / (b.t - a.t);
+      +          const r = lerp(a.c[0], b.c[0], localT);
+      +          const g = lerp(a.c[1], b.c[1], localT);
+      +          const bl = lerp(a.c[2], b.c[2], localT);
+      +          return `rgb(${r},${g},${bl})`;
+      +        }
+      +      }
+      +      return '#E53935';
+      +    }
+      +
+      +    // Hook: substituir chamadas showResultado feitas anteriormente para incluir cor/badge
+      +    // Onde calcularam: const texto = `IMC: ${imcFixed} — ${categoria}`; showResultado(texto, false);
+      +    // Atualizar para:
+      +    // const color = getColorForIMC(imc);
+      +    // showResultado(`${texto} <span class="resultado-badge" style="background:${color}">${categoria}</span>`, false);
+      +
+      ...existing code...#04d8e7;
       padding: 20px;
       border-radius: 10px;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
