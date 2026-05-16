@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calculadora de IMC</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f3ee;
+      --card: #ffffff;
+      --text: #1a1a18;
+      --muted: #7a7870;
+      --border: rgba(0,0,0,0.10);
+      --radius: 20px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 48px 16px;
+      color: var(--text);
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 520px;
+    }
+
+    h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2.6rem;
+      line-height: 1.1;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 0.95rem;
+      color: var(--muted);
+      margin-bottom: 32px;
+      font-weight: 300;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 28px;
+      margin-bottom: 16px;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    input[type="number"] {
+      flex: 1;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 1.1rem;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 400;
+      color: var(--text);
+      background: var(--bg);
+      outline: none;
+      transition: border-color 0.2s;
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+    input[type="number"]:focus {
+      border-color: #1a1a18;
+    }
+
+    .unit {
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      background: var(--text);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      cursor: pointer;
+      letter-spacing: 0.01em;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    button:hover { opacity: 0.85; }
+    button:active { transform: scale(0.99); }
+
+    .result-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 28px;
+      display: none;
+    }
+
+    .result-card.visible { display: block; }
+
+    .result-label {
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .result-value {
+      font-family: 'DM Serif Display', serif;
+      font-size: 4rem;
+      line-height: 1;
+      margin-bottom: 4px;
+      transition: color 0.4s;
+    }
+
+    .result-classification {
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 28px;
+      transition: color 0.4s;
+    }
+
+    /* Gradient bar */
+    .scale-wrap {
+      margin-top: 8px;
+    }
+
+    .scale-bar-outer {
+      position: relative;
+      height: 14px;
+      border-radius: 99px;
+      background: linear-gradient(
+        to right,
+        #3b82f6 0%,
+        #22c55e 25%,
+        #a3e635 40%,
+        #facc15 52%,
+        #f97316 66%,
+        #ef4444 80%,
+        #991b1b 100%
+      );
+      margin-bottom: 10px;
+    }
+
+    .scale-marker {
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: white;
+      border: 3px solid #1a1a18;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      transition: left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      display: none;
+    }
+
+    .scale-marker.visible { display: block; }
+
+    .scale-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .classes-list {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .class-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      transition: background 0.3s;
+    }
+
+    .class-row.active {
+      background: rgba(0,0,0,0.04);
+    }
+
+    .class-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .class-name {
+      font-size: 0.85rem;
+      flex: 1;
+      font-weight: 400;
+    }
+
+    .class-range {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .class-row.active .class-name {
+      font-weight: 500;
+    }
+
+    .error {
+      color: #dc2626;
+      font-size: 0.85rem;
+      margin-top: 10px;
+      display: none;
+    }
+
+    /* History */
+    .history-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 28px;
+      margin-top: 16px;
+      display: none;
+    }
+
+    .history-card.visible { display: block; }
+
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .history-title {
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .btn-clear {
+      width: auto;
+      padding: 5px 12px;
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 400;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .btn-clear:hover {
+      color: #dc2626;
+      border-color: #dc2626;
+      opacity: 1;
+    }
+
+    .history-empty {
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-align: center;
+      padding: 16px 0;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      animation: fadeIn 0.25s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .h-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .h-imc {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.2rem;
+      min-width: 44px;
+    }
+
+    .h-info {
+      flex: 1;
+    }
+
+    .h-class {
+      font-size: 0.82rem;
+      font-weight: 500;
+    }
+
+    .h-meta {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    .h-date {
+      font-size: 0.72rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .h-btn-del {
+      width: auto;
+      padding: 4px 8px;
+      background: transparent;
+      color: var(--muted);
+      border: none;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: color 0.2s;
+      flex-shrink: 0;
+    }
+
+    .h-btn-del:hover { color: #dc2626; opacity: 1; transform: none; }
+  </style>
+</head>
+<body>
+
+<div class="wrap">
+  <h1>Calculadora<br><em>de IMC</em></h1>
+  <p class="subtitle">Índice de Massa Corporal · insira seus dados abaixo</p>
+
+  <div class="card">
+    <div class="input-group">
+      <label for="peso">Peso</label>
+      <div class="input-row">
+        <input type="number" id="peso" placeholder="70" min="10" max="300" step="0.1" />
+        <span class="unit">kg</span>
+      </div>
+    </div>
+    <div class="input-group">
+      <label for="altura">Altura</label>
+      <div class="input-row">
+        <input type="number" id="altura" placeholder="175" min="50" max="250" step="1" />
+        <span class="unit">cm</span>
+      </div>
+    </div>
+    <p class="error" id="error-msg">Preencha peso e altura com valores válidos.</p>
+    <button onclick="calcular()">Calcular IMC</button>
+  </div>
+
+  <div class="result-card" id="result-card">
+    <p class="result-label">Seu IMC</p>
+    <p class="result-value" id="result-value">—</p>
+    <p class="result-classification" id="result-classification">—</p>
+
+    <div class="scale-wrap">
+      <div class="scale-bar-outer">
+        <div class="scale-marker" id="scale-marker"></div>
+      </div>
+      <div class="scale-labels">
+        <span>&lt;16</span>
+        <span>18.5</span>
+        <span>25</span>
+        <span>30</span>
+        <span>35</span>
+        <span>40+</span>
+      </div>
+    </div>
+
+    <div class="classes-list" id="classes-list"></div>
+  </div>
+
+  <div class="history-card" id="history-card">
+    <div class="history-header">
+      <span class="history-title">Histórico</span>
+      <button class="btn-clear" onclick="limparHistorico()">Limpar tudo</button>
+    </div>
+    <div class="history-list" id="history-list"></div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'imc_historico';
+
+  const classes = [
+    { label: "Magreza grave",       min: 0,    max: 16,   color: "#3b82f6" },
+    { label: "Magreza moderada",    min: 16,   max: 17,   color: "#60a5fa" },
+    { label: "Magreza leve",        min: 17,   max: 18.5, color: "#86efac" },
+    { label: "Peso normal",         min: 18.5, max: 25,   color: "#22c55e" },
+    { label: "Sobrepeso",           min: 25,   max: 30,   color: "#facc15" },
+    { label: "Obesidade grau I",    min: 30,   max: 35,   color: "#f97316" },
+    { label: "Obesidade grau II",   min: 35,   max: 40,   color: "#ef4444" },
+    { label: "Obesidade grau III",  min: 40,   max: Infinity, color: "#991b1b" },
+  ];
+
+  function formatRange(c) {
+    if (c.min === 0) return `< ${c.max}`;
+    if (c.max === Infinity) return `≥ ${c.min}`;
+    return `${c.min} – ${c.max}`;
+  }
+
+  function buildList(activeIndex) {
+    const list = document.getElementById('classes-list');
+    list.innerHTML = '';
+    classes.forEach((c, i) => {
+      const row = document.createElement('div');
+      row.className = 'class-row' + (i === activeIndex ? ' active' : '');
+      row.innerHTML = `
+        <span class="class-dot" style="background:${c.color}"></span>
+        <span class="class-name">${c.label}</span>
+        <span class="class-range">${formatRange(c)}</span>
+      `;
+      list.appendChild(row);
+    });
+  }
+
+  function imcToPercent(imc) {
+    const MIN_IMC = 10, MAX_IMC = 45;
+    const clamped = Math.min(Math.max(imc, MIN_IMC), MAX_IMC);
+    return ((clamped - MIN_IMC) / (MAX_IMC - MIN_IMC)) * 100;
+  }
+
+  /* ── Histórico ─────────────────────────────────── */
+  function carregarHistorico() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch { return []; }
+  }
+
+  function salvarHistorico(hist) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(hist));
+  }
+
+  function formatarData(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString('pt-BR') + ' · ' +
+           d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function renderHistorico() {
+    const hist = carregarHistorico();
+    const card = document.getElementById('history-card');
+    const list = document.getElementById('history-list');
+
+    if (hist.length === 0) {
+      card.classList.remove('visible');
+      return;
+    }
+
+    card.classList.add('visible');
+    list.innerHTML = '';
+
+    [...hist].reverse().forEach((item, revIdx) => {
+      const realIdx = hist.length - 1 - revIdx;
+      const el = document.createElement('div');
+      el.className = 'history-item';
+      el.innerHTML = `
+        <span class="h-dot" style="background:${item.color}"></span>
+        <span class="h-imc" style="color:${item.color}">${item.imc}</span>
+        <div class="h-info">
+          <div class="h-class">${item.classificacao}</div>
+          <div class="h-meta">${item.peso} kg · ${item.altura} cm</div>
+        </div>
+        <span class="h-date">${formatarData(item.data)}</span>
+        <button class="h-btn-del" onclick="deletarItem(${realIdx})" title="Remover">✕</button>
+      `;
+      list.appendChild(el);
+    });
+  }
+
+  function adicionarAoHistorico(entry) {
+    const hist = carregarHistorico();
+    hist.push(entry);
+    if (hist.length > 20) hist.shift();
+    salvarHistorico(hist);
+    renderHistorico();
+  }
+
+  function deletarItem(idx) {
+    const hist = carregarHistorico();
+    hist.splice(idx, 1);
+    salvarHistorico(hist);
+    renderHistorico();
+  }
+
+  function limparHistorico() {
+    if (!confirm('Apagar todo o histórico?')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    renderHistorico();
+  }
+
+  /* ── Calcular ──────────────────────────────────── */
+  function calcular() {
+    const peso = parseFloat(document.getElementById('peso').value);
+    const altCm = parseFloat(document.getElementById('altura').value);
+    const err = document.getElementById('error-msg');
+
+    if (!peso || !altCm || peso <= 0 || altCm <= 0) {
+      err.style.display = 'block';
+      return;
+    }
+    err.style.display = 'none';
+
+    const altM = altCm / 100;
+    const imc = peso / (altM * altM);
+    const imcFormatado = imc.toFixed(1);
+
+    const idx = classes.findIndex(c => imc >= c.min && imc < c.max);
+    const cls = classes[idx];
+
+    document.getElementById('result-value').textContent = imcFormatado;
+    document.getElementById('result-value').style.color = cls.color;
+    document.getElementById('result-classification').textContent = cls.label;
+    document.getElementById('result-classification').style.color = cls.color;
+
+    const marker = document.getElementById('scale-marker');
+    marker.classList.add('visible');
+    setTimeout(() => { marker.style.left = imcToPercent(imc) + '%'; }, 50);
+
+    buildList(idx);
+
+    const card = document.getElementById('result-card');
+    card.classList.add('visible');
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    adicionarAoHistorico({
+      imc: imcFormatado,
+      classificacao: cls.label,
+      color: cls.color,
+      peso: peso,
+      altura: altCm,
+      data: new Date().toISOString()
+    });
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Enter') calcular(); });
+
+  renderHistorico();
+</script>
+</body>
+</html>
